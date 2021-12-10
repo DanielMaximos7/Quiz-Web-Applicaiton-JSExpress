@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<title>Page Title</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="">
+<style>
+</style>
+
+<body>
+
+    <h1>Quiz</h1>
+    <div id='questions-div'></div>
+    <button id="submit" onClick="submitAnswers()">Submit Quiz</button>
+    <div id='result-div'></div>
+
+</body>
+
+<script>
+
+    var arr = [];
+
+    getQuestions();
+
+    function getQuestions(){
+
+        let xReq = new XMLHttpRequest();
+        xReq.onreadystatechange = displayQuestions;
+        //creates get request for url /questions
+        xReq.open('GET', '/questions', true);
+        //sends request
+        xReq.send();
+    }
+
+    function displayQuestions()
+    {
+        //if the request finished/response ready and OK status
+        if(this.readyState == 4 && this.status == 200)
+        {
+            //parse the JSON questions 
+            arr = JSON.parse(this.responseText);
+            //string holding html questions
+            questions = "";
+            //for the amount of questions 
+            for(i = 0; i < arr.length; i++) {
+                //display each question
+                questions += '<div><p>' + arr[i].stem + '</p></br>';
+
+                    //for each question's options
+                    for (var j = 0; j < arr[i].options.length; j++) {
+                        //create grouped radio buttions for each number of options the question has
+                        questions += '<input type="radio" id="' + "q" + i + arr[i].options[j] + '" name="q' + i + '" value="' + arr[i].options[j] + '">';
+                        questions += '<label for="' + "q" + i + arr[i].options[j] + '">' + arr[i].options[j] + '</label><br>';    
+                    }
+
+                arr[i].display + '</a><br>';
+            }
+
+            questions += '</div>';
+
+            //create the static html questions to display to user
+            document.getElementById("questions-div").innerHTML = questions;
+        }
+    }
+    //responsible for submitting the answers the user inputed and computing the amount correct
+    function submitAnswers() {
+        let answers = []
+        //for all the number of answers
+        for(var i = 0; i < arr.length; i++) {
+            //query for the radio input of the user
+            answers.push(document.querySelector('input[name="q' + i + '"]:checked').value);
+        }
+
+        //new http request
+        let xReq = new XMLHttpRequest();
+        //post the number of answers correct
+        xReq.open('POST', '/check-answers', true);
+        xReq.onreadystatechange = displayResult;
+        xReq.setRequestHeader("Content-Type", "application/json");
+        xReq.send(
+            JSON.stringify(answers));
+
+    }
+    //responsible for displaying the amount of answer correct
+    function displayResult() {
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+            document.getElementById("result-div").innerHTML = "<h3>You scored " + JSON.parse(this.responseText).count + "/" + arr.length +"</h3>";
+        }
+    }
+
+</script>
+
+</html>
